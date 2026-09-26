@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Редактирование профиля - Онлайн-Библиотека{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 760px;">
+    
+    <!-- Кнопка возврата -->
+    <div class="mb-3">
+        <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i> Назад в профиль
+        </a>
+    </div>
+
+    <div class="card card-custom shadow-sm border-0 overflow-hidden">
+        <div class="card-header bg-white py-3 px-4 border-bottom">
+            <h5 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="bi bi-pencil-square text-primary"></i> Редактирование профиля
+            </h5>
+        </div>
+        
+        <div class="card-body p-4">
+            
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <!-- Раздел 1: Личные данные -->
+                <h6 class="fw-bold text-uppercase text-muted fs-7 mb-3 pb-2 border-bottom">
+                    <i class="bi bi-person me-1"></i> Личная информация
+                </h6>
+                
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ user_form.first_name.id_for_label }}" class="form-label fw-semibold text-dark small">Имя</label>
+                        {{ user_form.first_name }}
+                        {% if user_form.first_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in user_form.first_name.errors %}<i class="bi bi-x-circle me-1"></i>{{ error|striptags }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="{{ user_form.last_name.id_for_label }}" class="form-label fw-semibold text-dark small">Фамилия</label>
+                        {{ user_form.last_name }}
+                        {% if user_form.last_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in user_form.last_name.errors %}<i class="bi bi-x-circle me-1"></i>{{ error|striptags }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ user_form.email.id_for_label }}" class="form-label fw-semibold text-dark small">Email адрес</label>
+                    {{ user_form.email }}
+                    {% if user_form.email.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in user_form.email.errors %}<i class="bi bi-x-circle me-1"></i>{{ error|striptags }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Аватар -->
+                <div class="mb-4">
+                    <label for="{{ user_form.avatar.id_for_label }}" class="form-label fw-semibold text-dark small">Аватар профиля</label>
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="rounded-circle border shadow-sm" style="width: 64px; height: 64px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light border text-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                                <i class="bi bi-person fs-3"></i>
+                            </div>
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            {{ user_form.avatar }}
+                        </div>
+                    </div>
+                    {% if user_form.avatar.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in user_form.avatar.errors %}<i class="bi bi-x-circle me-1"></i>{{ error|striptags }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Раздел 2: Данные автора -->
+                {% if is_author and author_form %}
+                    <h6 class="fw-bold text-uppercase text-muted fs-7 mb-3 pb-2 border-bottom mt-4">
+                        <i class="bi bi-journal-text me-1"></i> Информация об авторе
+                    </h6>
+
+                    <div class="mb-3">
+                        <label for="{{ author_form.bio.id_for_label }}" class="form-label fw-semibold text-dark small">Биография / О себе</label>
+                        {{ author_form.bio }}
+                        {% if author_form.bio.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in author_form.bio.errors %}<i class="bi bi-x-circle me-1"></i>{{ error|striptags }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ author_form.photo.id_for_label }}" class="form-label fw-semibold text-dark small">Фотография автора</label>
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            {% if author_form.instance.photo %}
+                                <img src="{{ author_form.instance.photo.url }}" alt="Фото автора" class="rounded border shadow-sm" style="width: 70px; height: 85px; object-fit: cover;">
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                {{ author_form.photo }}
+                            </div>
+                        </div>
+                        {% if author_form.photo.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in author_form.photo.errors %}<i class="bi bi-x-circle me-1"></i>{{ error|striptags }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <!-- Кнопки управления -->
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center pt-3 border-top gap-3">
+                    <a href="{% url 'users:change_password' %}" class="btn btn-outline-warning rounded-pill btn-sm px-3">
+                        <i class="bi bi-shield-lock me-1"></i> Сменить пароль
+                    </a>
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'users:profile' %}" class="btn btn-light rounded-pill px-4 border">
+                            Отмена
+                        </a>
+                        <button type="submit" class="btn btn-success rounded-pill px-4 fw-medium">
+                            <i class="bi bi-check-lg me-1"></i> Сохранить
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

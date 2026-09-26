@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ book.title }} - Онлайн-библиотека{% endblock %}
+
+{% block content %}
+<div class="container my-4" style="max-width: 950px;">
+
+    <!-- Кнопка возврата -->
+    <div class="mb-3">
+        <a href="{% url 'books:book_list' %}" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-1">
+            <i class="bi bi-arrow-left"></i> Назад в каталог
+        </a>
+    </div>
+
+    <!-- Основная карточка книги -->
+    <div class="card card-custom shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <div class="row g-4">
+                
+                <!-- Обложка и действия -->
+                <div class="col-md-4 text-center">
+                    <div class="bg-light p-3 rounded mb-3 d-flex align-items-center justify-content-center" style="min-height: 320px;">
+                        {% if book.cover %}
+                            <img src="{{ book.cover.url }}" alt="{{ book.title }}" class="img-fluid rounded shadow-sm" style="max-height: 360px;">
+                        {% else %}
+                            <div class="text-secondary d-flex flex-column align-items-center">
+                                <i class="bi bi-book fs-1 mb-2 opacity-50"></i>
+                                <span class="small">Обложка отсутствует</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'books:book_download' book.pk %}" class="btn btn-success d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-download"></i> Скачать ({{ book.file_format|upper }})
+                        </a>
+
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'books:book_read' book.pk %}" class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
+                                <i class="bi bi-book-half"></i> Читать онлайн
+                            </a>
+
+                            <button id="detail-fav-btn" class="btn d-flex align-items-center justify-content-center gap-2 {% if is_favorite %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                                <i class="bi {% if is_favorite %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                                <span>{% if is_favorite %}В избранном{% else %}Добавить в избранное{% endif %}</span>
+                            </button>
+                        {% else %}
+                            <a href="{% url 'users:login' %}" class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2">
+                                <i class="bi bi-box-arrow-in-right"></i> Войдите, чтобы читать онлайн
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Метаданные книги -->
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <h2 class="fw-bold text-dark mb-0">{{ book.title }}</h2>
+                        {% if avg_rating %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill fs-6 px-3">
+                                <i class="bi bi-star-fill text-warning me-1"></i>{{ avg_rating }} / 5
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="fs-5 text-muted mb-3">
+                        <strong>Авторы:</strong> 
+                        {% for author in book.authors.all %}
+                            {{ author }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            Не указаны
+                        {% endfor %}
+                    </p>
+
+                    <div class="mb-3 d-flex flex-wrap gap-1 align-items-center">
+                        <strong class="me-2">Жанры:</strong>
+                        {% for genre in book.genres.all %}
+                            <span class="badge bg-light text-dark border rounded-pill">{{ genre.name }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <hr class="my-3">
+
+                    <h5 class="fw-bold mb-2"><i class="bi bi-text-paragraph text-primary me-2"></i>Аннотация</h5>
+                    <p class="card-text text-secondary lh-lg mb-4" style="white-space: pre-line;">{{ book.description }}</p>
+
+                    <div class="row g-2 text-muted small bg-light p-3 rounded">
+                        <div class="col-6"><strong>Год издания:</strong> {{ book.publication_year|default:"Не указан" }}</div>
+                        <div class="col-6"><strong>Формат:</strong> {{ book.file_format|upper }}</div>
+                        <div class="col-6"><strong>Просмотров:</strong> {{ book.views_count }}</div>
+                        <div class="col-6"><strong>Загружена:</strong> {{ book.created_at|date:"d.m.Y" }}</div>
+                    </div>
+
+                    <!-- Блок информации об авторах -->
+                    <div class="card border-0 bg-light mt-4">
+                        <div class="card-body p-3">
+                            <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-pen-fill text-primary"></i> Об авторе
+                            </h6>
+                            
+                            {% for author in book.authors.all %}
+                                <div class="d-flex align-items-start gap-3 {% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                                    {% if author.photo %}
+                                        <img src="{{ author.photo.url }}" alt="{{ author }}" class="rounded shadow-sm" style="width: 70px; height: 90px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded bg-secondary-subtle text-secondary d-flex align-items-center justify-content-center shadow-sm" style="width: 70px; height: 90px;">
+                                            <i class="bi bi-person fs-3"></i>
+                                        </div>
+                                    {% endif %}
+
+                                    <div>
+                                        <h6 class="fw-bold mb-1">{{ author }}</h6>
+                                        <p class="card-text text-muted small mb-0">
+                                            {{ author.bio|default:"Информация об авторе пока не заполнена." }}
+                                        </p>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted small mb-0">Автор не указан.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Раздел Отзывов и Оценок -->
+    <div class="card card-custom shadow-sm border-0">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <i class="bi bi-chat-square-text-fill text-primary"></i> Отзывы и оценки
+            </h4>
+
+            {% if user.is_authenticated %}
+                {% if user_review %}
+                    <div class="alert alert-info border-0 shadow-sm mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="fw-bold mb-0">Ваш отзыв</h6>
+                            <span class="badge {% if user_review.is_approved %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                {% if user_review.is_approved %}Опубликован{% else %}На модерации{% endif %}
+                            </span>
+                        </div>
+                        <div class="text-warning mb-2">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= user_review.rating %}★{% else %}☆{% endif %}
+                            {% endfor %}
+                        </div>
+                        <p class="mb-0 text-dark">{{ user_review.text }}</p>
+                    </div>
+                {% else %}
+                    <div class="card bg-light border-0 p-3 mb-4">
+                        <h5 class="fw-bold mb-3">Оставить отзыв</h5>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label class="form-label fw-medium">{{ review_form.rating.label }}</label>
+                                    {{ review_form.rating }}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">{{ review_form.text.label }}</label>
+                                {{ review_form.text }}
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4">Отправить отзыв</button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-secondary border-0 mb-4 text-center">
+                    Чтобы оставить отзыв, пожалуйста, <a href="{% url 'users:login' %}" class="fw-bold">войдите в аккаунт</a>.
+                </div>
+            {% endif %}
+
+            <!-- Список одобренных отзывов -->
+            {% if reviews %}
+                <div class="d-flex flex-column gap-3">
+                    {% for review in reviews %}
+                        <div class="d-flex align-items-start gap-3 border-bottom pb-3">
+                            {% if review.user.avatar %}
+                                <img src="{{ review.user.avatar.url }}" class="rounded-circle shadow-sm" style="width: 45px; height: 45px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-sm fw-bold" style="width: 45px; height: 45px; flex-shrink: 0;">
+                                    {{ review.user.username|first|upper }}
+                                </div>
+                            {% endif %}
+
+                            <div class="w-100">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="mb-0 fw-bold">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                    <span class="text-warning small fw-bold">★ {{ review.rating }}/5</span>
+                                </div>
+                                <p class="mb-0 text-secondary small">{{ review.text }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">К этой книге пока нет опубликованных отзывов. Будьте первыми!</p>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const favBtn = document.getElementById('detail-fav-btn');
+    if (favBtn) {
+        favBtn.addEventListener('click', () => {
+            fetch("{% url 'books:toggle_favorite' book.pk %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const icon = favBtn.querySelector('i');
+                    const textSpan = favBtn.querySelector('span');
+
+                    if (data.is_favorite) {
+                        favBtn.className = 'btn btn-danger d-flex align-items-center justify-content-center gap-2';
+                        icon.className = 'bi bi-heart-fill';
+                        textSpan.textContent = 'В избранном';
+                    } else {
+                        favBtn.className = 'btn btn-outline-danger d-flex align-items-center justify-content-center gap-2';
+                        icon.className = 'bi bi-heart';
+                        textSpan.textContent = 'Добавить в избранное';
+                    }
+                }
+            })
+            .catch(err => console.error('Ошибка переключения избранного:', err));
+        });
+    }
+});
+</script>
+{% endblock %}

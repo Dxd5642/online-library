@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Модерация: {{ book.title }} - Онлайн-Библиотека{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 960px;">
+    
+    <!-- Навигация назад -->
+    <div class="mb-4">
+        <a href="{% url 'books:moderator_dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i> Назад к списку модерации
+        </a>
+    </div>
+
+    <!-- Основная карточка проверки -->
+    <div class="card card-custom shadow-sm border-0 overflow-hidden">
+        <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="bi bi-journal-check text-primary"></i> Проверка карточки книги
+            </h5>
+            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2">
+                <i class="bi bi-hourglass-split me-1"></i> На модерации
+            </span>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row g-4">
+                
+                <!-- Левая колонка: Обложка и Скачивание -->
+                <div class="col-md-4 text-center">
+                    <div class="position-relative mb-3">
+                        {% if book.cover %}
+                            <img src="{{ book.cover.url }}" alt="{{ book.title }}" class="img-fluid rounded shadow-sm w-100" style="max-height: 380px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light border text-muted rounded d-flex flex-column align-items-center justify-content-center p-4" style="height: 320px;">
+                                <i class="bi bi-journal-bookmark display-4 mb-2 text-secondary"></i>
+                                <span class="small">Обложка отсутствует</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if book.file %}
+                        <div class="d-grid">
+                            <a href="{{ book.file.url }}" class="btn btn-outline-primary rounded-pill fw-medium" target="_blank" download>
+                                <i class="bi bi-download me-1"></i> Скачать файл ({{ book.file_format|upper }})
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning small mb-0">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Файл книги не загружен
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Правая колонка: Метаданные книги -->
+                <div class="col-md-8 d-flex flex-column justify-content-between">
+                    <div>
+                        <h2 class="fw-bold text-dark mb-2">{{ book.title }}</h2>
+
+                        <!-- Авторы -->
+                        <p class="text-muted mb-2">
+                            <strong class="text-dark">Авторы:</strong> 
+                            {% for author in book.authors.all %}
+                                <span class="fw-medium text-dark">{{ author.name|default:author }}</span>{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                <span class="text-muted italic">Не указаны</span>
+                            {% endfor %}
+                        </p>
+
+                        <!-- Жанры -->
+                        <div class="mb-3">
+                            <strong class="text-dark me-2">Жанры:</strong>
+                            {% for genre in book.genres.all %}
+                                <span class="badge bg-secondary-subtle text-secondary border rounded-pill px-2 py-1 me-1">
+                                    {{ genre.name }}
+                                </span>
+                            {% empty %}
+                                <span class="text-muted small">Не указаны</span>
+                            {% endfor %}
+                        </div>
+
+                        <hr class="my-3">
+
+                        <!-- Аннотация -->
+                        <h6 class="fw-bold text-dark mb-2">Аннотация / Описание</h6>
+                        <p class="text-secondary small mb-4" style="white-space: pre-line; leading-trim: both;">{{ book.description|default:"Описание отсутствует." }}</p>
+                    </div>
+
+                    <div>
+                        <!-- Детали загрузки -->
+                        <div class="bg-light rounded p-3 mb-4 small text-muted">
+                            <div class="row g-2">
+                                <div class="col-sm-6">
+                                    <i class="bi bi-person me-1"></i><strong>Загрузил:</strong> {{ book.uploaded_by.username }} ({{ book.uploaded_by.email }})
+                                </div>
+                                <div class="col-sm-6">
+                                    <i class="bi bi-calendar-event me-1"></i><strong>Год издания:</strong> {{ book.publication_year|default:"Не указан" }}
+                                </div>
+                                <div class="col-sm-6">
+                                    <i class="bi bi-clock me-1"></i><strong>Дата подачи:</strong> {{ book.created_at|date:"d.m.Y H:i" }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Панель действий модератора -->
+                        <div class="p-3 bg-light rounded-3 border d-flex flex-column flex-sm-row gap-2">
+                            <form method="post" action="{% url 'books:moderator_approve' book.pk %}" class="flex-grow-1">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success w-100 rounded-pill fw-medium" onclick="return confirm('Опубликовать эту книгу в общем каталоге?');">
+                                    <i class="bi bi-check-circle me-1"></i> Одобрить и опубликовать
+                                </button>
+                            </form>
+
+                            <form method="post" action="{% url 'books:moderator_reject' book.pk %}" class="flex-grow-1">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger w-100 rounded-pill fw-medium" onclick="return confirm('Отклонить эту книгу?');">
+                                    <i class="bi bi-x-circle me-1"></i> Отклонить
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

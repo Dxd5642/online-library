@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Панель модерации - Онлайн-Библиотека{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    
+    <!-- Шапка панели -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom">
+        <div>
+            <h2 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-shield-check text-primary"></i> Панель модерации
+            </h2>
+            <p class="text-muted mb-0">Управление заявками на публикацию книг и проверкой отзывов</p>
+        </div>
+        <div>
+            <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary rounded-pill btn-sm px-3">
+                <i class="bi bi-arrow-left me-1"></i> В профиль
+            </a>
+        </div>
+    </div>
+
+    <!-- Навигационные вкладки -->
+    <ul class="nav nav-pills custom-pills mb-4 gap-2">
+        <li class="nav-item">
+            <a class="nav-link rounded-pill px-4 {% if active_tab == 'books' %}active fw-semibold{% endif %}" href="?tab=books">
+                <i class="bi bi-journal-text me-1"></i> Книги на проверку
+                {% if pending_books_count > 0 %}
+                    <span class="badge rounded-pill bg-danger ms-2">{{ pending_books_count }}</span>
+                {% endif %}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill px-4 {% if active_tab == 'reviews' %}active fw-semibold{% endif %}" href="?tab=reviews">
+                <i class="bi bi-chat-square-quote me-1"></i> Отзывы на модерацию
+                {% if pending_reviews_count > 0 %}
+                    <span class="badge rounded-pill bg-warning text-dark ms-2">{{ pending_reviews_count }}</span>
+                {% endif %}
+            </a>
+        </li>
+    </ul>
+
+    <!-- СОДЕРЖИМОЕ ВКЛАДКИ 1: КНИГИ -->
+    {% if active_tab == 'books' %}
+        {% if books %}
+            <div class="card card-custom shadow-sm border-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 70px;" class="ps-4">Обложка</th>
+                                <th>Название</th>
+                                <th>Загрузил</th>
+                                <th>Формат</th>
+                                <th>Дата подачи</th>
+                                <th class="text-end pe-4">Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for book in books %}
+                                <tr>
+                                    <td class="ps-4">
+                                        {% if book.cover %}
+                                            <img src="{{ book.cover.url }}" alt="{{ book.title }}" style="width: 42px; height: 60px; object-fit: cover;" class="rounded shadow-sm">
+                                        {% else %}
+                                            <div class="bg-light border text-muted rounded d-flex align-items-center justify-content-center" style="width: 42px; height: 60px;">
+                                                <i class="bi bi-journal-bookmark fs-5"></i>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-dark d-block mb-0">{{ book.title }}</span>
+                                        <small class="text-muted">{{ book.author }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border fw-normal">
+                                            <i class="bi bi-person me-1"></i>{{ book.uploaded_by.username }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-secondary border">
+                                            {{ book.file_format|upper }}
+                                        </span>
+                                    </td>
+                                    <td class="small text-muted">
+                                        {{ book.created_at|date:"d.m.Y H:i" }}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="{% url 'books:moderator_book_detail' book.pk %}" class="btn btn-primary btn-sm rounded-pill px-3">
+                                            <i class="bi bi-search me-1"></i> Проверить
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="card card-custom shadow-sm border-0 text-center p-5">
+                <div class="mb-3">
+                    <i class="bi bi-check-circle-fill text-success display-4"></i>
+                </div>
+                <h5 class="fw-bold text-dark">Все книги проверены!</h5>
+                <p class="text-muted mb-0">В очереди нет новых заявок на модерацию книг.</p>
+            </div>
+        {% endif %}
+
+    <!-- СОДЕРЖИМОЕ ВКЛАДКИ 2: ОТЗЫВЫ -->
+    {% elif active_tab == 'reviews' %}
+        {% if reviews %}
+            <div class="card card-custom shadow-sm border-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Пользователь</th>
+                                <th>Книга</th>
+                                <th>Оценка</th>
+                                <th>Текст отзыва</th>
+                                <th>Дата</th>
+                                <th class="text-end pe-4" style="min-width: 200px;">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for review in reviews %}
+                                <tr>
+                                    <td class="ps-4 fw-semibold text-dark">
+                                        <i class="bi bi-person-circle text-muted me-1"></i>{{ review.user.username }}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'books:book_detail' review.book.pk %}" target="_blank" class="text-decoration-none fw-medium">
+                                            {{ review.book.title|truncatechars:30 }}
+                                            <i class="bi bi-box-arrow-up-right small text-muted ms-1"></i>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">
+                                            <i class="bi bi-star-fill text-warning me-1"></i>{{ review.rating }}/5
+                                        </span>
+                                    </td>
+                                    <td style="max-width: 320px;">
+                                        <p class="small text-secondary mb-0 text-break">
+                                            "{{ review.text|truncatechars:120 }}"
+                                        </p>
+                                    </td>
+                                    <td class="small text-muted">
+                                        {{ review.created_at|date:"d.m.Y H:i" }}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="d-flex gap-2 justify-content-end">
+                                            <form method="post" action="{% url 'books:moderator_approve_review' review.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-success btn-sm rounded-pill px-3">
+                                                    <i class="bi bi-check-lg me-1"></i> Одобрить
+                                                </button>
+                                            </form>
+                                            <form method="post" action="{% url 'books:moderator_reject_review' review.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="return confirm('Удалить этот отзыв безвозвратно?');">
+                                                    <i class="bi bi-x-lg me-1"></i> Отклонить
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="card card-custom shadow-sm border-0 text-center p-5">
+                <div class="mb-3">
+                    <i class="bi bi-check-circle-fill text-success display-4"></i>
+                </div>
+                <h5 class="fw-bold text-dark">Все отзывы проверены!</h5>
+                <p class="text-muted mb-0">В очереди нет неотмодерированных отзывов.</p>
+            </div>
+        {% endif %}
+    {% endif %}
+
+</div>
+{% endblock %}

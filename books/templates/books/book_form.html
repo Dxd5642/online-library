@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Добавление новой книги{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+
+        <!-- Кнопка возврата -->
+        <div class="mb-3">
+            <a href="{% url 'users:profile' %}" class="btn btn-sm btn-outline-secondary rounded-pill d-inline-flex align-items-center gap-1">
+                <i class="bi bi-arrow-left"></i> Назад в профиль
+            </a>
+        </div>
+
+        <div class="card card-custom shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+
+                <!-- Заголовок формы -->
+                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                    <div class="bg-primary-subtle text-primary p-3 rounded-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-journal-plus fs-3"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold text-dark mb-1">Добавление книги</h3>
+                        <p class="text-muted small mb-0">Заполните информацию о произведении и отправьте его на модерацию</p>
+                    </div>
+                </div>
+
+                <!-- Сообщения об ошибках / успехах -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3 mb-4" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Общие ошибки формы -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger rounded-3 mb-4">
+                        {% for error in form.non_field_errors %}
+                            <p class="mb-0 small"><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Название книги -->
+                    <div class="mb-4">
+                        <label for="{{ form.title.id_for_label }}" class="form-label fw-semibold text-dark">
+                            Название книги <span class="text-danger">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.title.errors %}<i class="bi bi-x-circle me-1"></i>{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Описание / Аннотация -->
+                    <div class="mb-4">
+                        <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold text-dark">
+                            Описание / Аннотация <span class="text-danger">*</span>
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.description.errors %}<i class="bi bi-x-circle me-1"></i>{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Обложка и Формат -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="{{ form.cover.id_for_label }}" class="form-label fw-semibold text-dark">
+                                Обложка книги
+                            </label>
+                            {{ form.cover }}
+                            {% if form.cover.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.cover.errors %}<i class="bi bi-x-circle me-1"></i>{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.file_format.id_for_label }}" class="form-label fw-semibold text-dark">
+                                Формат файла <span class="text-danger">*</span>
+                            </label>
+                            {{ form.file_format }}
+                            {% if form.file_format.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.file_format.errors %}<i class="bi bi-x-circle me-1"></i>{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Файл книги и Год издания -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="{{ form.file.id_for_label }}" class="form-label fw-semibold text-dark">
+                                Файл книги <span class="text-danger">*</span>
+                            </label>
+                            {{ form.file }}
+                            {% if form.file.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.file.errors %}<i class="bi bi-x-circle me-1"></i>{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.publication_year.id_for_label }}" class="form-label fw-semibold text-dark">
+                                Год издания
+                            </label>
+                            {{ form.publication_year }}
+                            {% if form.publication_year.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.publication_year.errors %}<i class="bi bi-x-circle me-1"></i>{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Жанры -->
+                    <div class="mb-4">
+                        <label for="{{ form.genres.id_for_label }}" class="form-label fw-semibold text-dark">
+                            Жанры
+                        </label>
+                        {{ form.genres }}
+                        <div class="form-text text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>Зажмите <kbd>Ctrl</kbd> (или <kbd>Cmd</kbd> на Mac), чтобы выбрать несколько жанров.
+                        </div>
+                        {% if form.genres.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.genres.errors %}<i class="bi bi-x-circle me-1"></i>{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Соавторы -->
+                    <div class="mb-4">
+                        <label for="{{ form.authors.id_for_label }}" class="form-label fw-semibold text-dark">
+                            Соавторы <span class="fw-normal text-muted">(опционально)</span>
+                        </label>
+                        {{ form.authors }}
+                        <div class="form-text text-muted small">
+                            <i class="bi bi-person-check me-1"></i>Вы будете автоматически добавлены как основной автор.
+                        </div>
+                        {% if form.authors.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.authors.errors %}<i class="bi bi-x-circle me-1"></i>{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Кнопка отправки -->
+                    <div class="pt-2">
+                        <button type="submit" class="btn btn-primary rounded-pill w-100 py-2.5 fw-semibold d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-send-fill"></i> Отправить на модерацию
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Каталог книг - Онлайн-Библиотека{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+    <!-- Панель поиска, фильтрации и сортировки -->
+    <div class="col-12">
+        <div class="card card-custom border-0 shadow-sm">
+            <div class="card-body p-4">
+                
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <h3 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-journal-bookmark-fill text-primary"></i> Каталог книг
+                    </h3>
+                    {% if query or selected_genre or selected_format or sort_by != 'newest' %}
+                        <a href="{% url 'books:book_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-arrow-counterclockwise"></i> Сбросить фильтры
+                        </a>
+                    {% endif %}
+                </div>
+
+                <form method="get" action="{% url 'books:book_list' %}" class="row g-3 align-items-center">
+                    
+                    <!-- Поисковая строка -->
+                    <div class="col-lg-4 col-md-12">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" name="q" value="{{ query }}" class="form-control bg-light border-start-0 ps-0" placeholder="Поиск по названию или автору...">
+                        </div>
+                    </div>
+
+                    <!-- Фильтр по жанру -->
+                    <div class="col-lg-3 col-md-4">
+                        <select name="genre" class="form-select bg-light" onchange="this.form.submit()">
+                            <option value="">Все жанры</option>
+                            {% for genre in genres %}
+                                <option value="{{ genre.slug }}" {% if selected_genre and selected_genre.slug == genre.slug %}selected{% endif %}>
+                                    {{ genre.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Фильтр по формату -->
+                    <div class="col-lg-2 col-md-4">
+                        <select name="format" class="form-select bg-light" onchange="this.form.submit()">
+                            <option value="">Все форматы</option>
+                            {% for code, label in formats %}
+                                <option value="{{ code }}" {% if selected_format == code %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Сортировка -->
+                    <div class="col-lg-3 col-md-4">
+                        <select name="sort" class="form-select bg-light" onchange="this.form.submit()">
+                            <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>🗓 Сначала новые</option>
+                            <option value="views" {% if sort_by == 'views' %}selected{% endif %}>👁 По популярности</option>
+                            <option value="downloads" {% if sort_by == 'downloads' %}selected{% endif %}>📥 По скачиваниям</option>
+                            <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>★ По рейтингу</option>
+                        </select>
+                    </div>
+
+                    <!-- Кнопка отправить (для удобства на мобильных устройствах) -->
+                    <div class="col-12 d-md-none text-end mt-2">
+                        <button type="submit" class="btn btn-primary rounded-pill w-100 btn-sm">
+                            <i class="bi bi-funnel-fill me-1"></i> Применить
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Сетка книг -->
+    {% if books %}
+        {% for book in books %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="card card-custom h-100 shadow-sm border-0 position-relative d-flex flex-column">
+                    
+                    <!-- Обложка книги -->
+                    <div class="text-center pt-3 pb-2 bg-light rounded-top d-flex align-items-center justify-content-center" style="height: 250px;">
+                        {% if book.cover %}
+                            <img src="{{ book.cover.url }}" alt="{{ book.title }}" style="max-height: 230px; max-width: 90%; object-fit: contain;" class="rounded shadow-sm">
+                        {% else %}
+                            <div class="bg-secondary-subtle text-secondary rounded d-flex flex-column align-items-center justify-content-center p-3" style="height: 220px; width: 140px;">
+                                <i class="bi bi-book fs-1 mb-2 opacity-50"></i>
+                                <span class="small fw-medium">Нет обложки</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Информационная часть карточки -->
+                    <div class="card-body d-flex flex-column p-3">
+                        
+                        <!-- Заголовок и рейтинг -->
+                        <div class="d-flex justify-content-between align-items-start gap-1 mb-2">
+                            <h6 class="card-title text-dark fw-bold mb-0 text-truncate" title="{{ book.title }}">
+                                <a href="{% url 'books:book_detail' book.pk %}" class="text-dark text-decoration-none">
+                                    {{ book.title }}
+                                </a>
+                            </h6>
+                            {% if book.avg_rating %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill">
+                                    <i class="bi bi-star-fill text-warning me-1"></i>{{ book.avg_rating|floatformat:1 }}
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Автор(ы) -->
+                        <p class="text-muted small mb-2 text-truncate">
+                            <i class="bi bi-person me-1"></i>
+                            {% for author in book.authors.all %}
+                                {{ author }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                Не указан
+                            {% endfor %}
+                        </p>
+
+                        <!-- Жанры -->
+                        <div class="mb-3 d-flex flex-wrap gap-1">
+                            {% for genre in book.genres.all %}
+                                <span class="badge bg-light text-dark border rounded-pill fw-normal" style="font-size: 0.75rem;">{{ genre.name }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Просмотры и скачивания -->
+                        <div class="d-flex align-items-center gap-3 text-muted small mb-3 mt-auto">
+                            <span title="Просмотры"><i class="bi bi-eye text-info me-1"></i>{{ book.views_count }}</span>
+                            <span title="Скачивания"><i class="bi bi-download text-success me-1"></i>{{ book.downloads_count }}</span>
+                        </div>
+
+                        <!-- Нижняя плашка: формат и действия -->
+                        <div class="pt-2 border-top d-flex justify-content-between align-items-center">
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">
+                                {{ book.file_format|upper }}
+                            </span>
+                            
+                            <div class="d-flex align-items-center gap-2">
+                                {% if user.is_authenticated %}
+                                    <button class="btn btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center favorite-btn {% if book.pk in user_favorite_ids %}btn-danger text-white{% else %}btn-outline-danger{% endif %}" 
+                                            style="width: 32px; height: 32px;"
+                                            data-book-id="{{ book.pk }}" 
+                                            title="В избранное">
+                                        <i class="bi {% if book.pk in user_favorite_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                                    </button>
+                                {% endif %}
+                                <a href="{% url 'books:book_detail' book.pk %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                    Подробнее
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <!-- Состояние "Книги не найдены" -->
+        <div class="col-12">
+            <div class="card card-custom text-center py-5 shadow-sm border-0">
+                <div class="card-body">
+                    <i class="bi bi-search fs-1 text-muted opacity-50 mb-3 d-block"></i>
+                    <h4 class="fw-bold text-dark mb-2">Книги не найдены</h4>
+                    <p class="text-muted mb-3">Попробуйте изменить параметры поиска или сбросить установленные фильтры.</p>
+                    <a href="{% url 'books:book_list' %}" class="btn btn-primary rounded-pill btn-sm px-4">
+                        Сбросить фильтры
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- Скрипт интерактивного добавления/удаления из избранного -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = "{{ csrf_token }}";
+
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const bookId = this.dataset.bookId;
+            const button = this;
+            const icon = button.querySelector('i');
+
+            fetch(`/books/${bookId}/favorite/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (data.is_favorite) {
+                        button.classList.remove('btn-outline-danger');
+                        button.classList.add('btn-danger', 'text-white');
+                        icon.classList.remove('bi-heart');
+                        icon.classList.add('bi-heart-fill');
+                    } else {
+                        button.classList.remove('btn-danger', 'text-white');
+                        button.classList.add('btn-outline-danger');
+                        icon.classList.remove('bi-heart-fill');
+                        icon.classList.add('bi-heart');
+                    }
+                }
+            })
+            .catch(err => console.error('Ошибка изменения статуса избранного:', err));
+        });
+    });
+});
+</script>
+{% endblock %}

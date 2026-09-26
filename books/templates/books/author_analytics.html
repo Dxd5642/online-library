@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% block title %}Аналитика автора{% endblock %}
+
+{% block content %}
+<!-- Подключение Chart.js для графиков -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-10">
+
+        <!-- Шапка страницы -->
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+            <div>
+                <h2 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                    <i class="bi bi-bar-chart-line-fill text-primary"></i> Аналитика и статистика
+                </h2>
+                <p class="text-muted small mb-0">Сводные показатели популярности ваших книг и вовлеченности читателей</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'books:my_books' %}" class="btn btn-outline-primary rounded-pill btn-sm fw-medium d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-journal-text"></i> Мои книги
+                </a>
+                <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary rounded-pill btn-sm fw-medium d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-person"></i> В профиль
+                </a>
+            </div>
+        </div>
+
+        <!-- Карточки ключевых метрик -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3 mb-4">
+            <div class="col">
+                <div class="card card-custom h-100 p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary-subtle text-primary p-3 rounded-3 d-flex align-items-center justify-content-center">
+                            <i class="bi bi-journal-album fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Всего книг</div>
+                            <div class="fs-4 fw-bold text-dark">{{ total_books }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card card-custom h-100 p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-info-subtle text-info-emphasis p-3 rounded-3 d-flex align-items-center justify-content-center">
+                            <i class="bi bi-eye fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Просмотры</div>
+                            <div class="fs-4 fw-bold text-dark">{{ total_views }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card card-custom h-100 p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-success-subtle text-success p-3 rounded-3 d-flex align-items-center justify-content-center">
+                            <i class="bi bi-download fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Скачивания</div>
+                            <div class="fs-4 fw-bold text-dark">{{ total_downloads }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card card-custom h-100 p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-warning-subtle text-warning-emphasis p-3 rounded-3 d-flex align-items-center justify-content-center">
+                            <i class="bi bi-star fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Ср. рейтинг</div>
+                            <div class="fs-4 fw-bold text-dark">{{ author_avg_rating }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Диаграмма вовлеченности -->
+        <div class="card card-custom mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
+                    <i class="bi bi-graph-up text-primary"></i> Сравнение просмотров и скачиваний по книгам
+                </h5>
+                {% if user_books %}
+                    <div style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="authorStatsChart"></canvas>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-bar-chart fs-1 opacity-50 mb-2"></i>
+                        <p class="mb-0">Нет данных для построения графика. Загрузите свою первую книгу!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Таблица детальной статистики по каждой книге -->
+        <div class="card card-custom overflow-hidden">
+            <div class="card-header bg-white border-bottom p-3">
+                <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-table text-primary"></i> Детальная статистика по публикациям
+                </h5>
+            </div>
+            {% if user_books %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light border-bottom">
+                            <tr>
+                                <th scope="col" class="ps-4">Название книги</th>
+                                <th scope="col" class="text-center">Статус</th>
+                                <th scope="col" class="text-center">Просмотры</th>
+                                <th scope="col" class="text-center">Скачивания</th>
+                                <th scope="col" class="text-center">Отзывы</th>
+                                <th scope="col" class="text-center">Рейтинг</th>
+                                <th scope="col" class="text-end pe-4">Дата</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for book in user_books %}
+                                <tr>
+                                    <td class="ps-4">
+                                        {% if book.status == 'published' %}
+                                            <a href="{% url 'books:book_detail' book.pk %}" class="fw-bold text-dark text-decoration-none" target="_blank">
+                                                {{ book.title }} <i class="bi bi-box-arrow-up-right small text-muted ms-1" style="font-size: 0.75rem;"></i>
+                                            </a>
+                                        {% else %}
+                                            <span class="fw-bold text-dark">{{ book.title }}</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="text-center">
+                                        {% if book.status == 'published' %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">Опубликовано</span>
+                                        {% elif book.status == 'pending' %}
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1">На модерации</span>
+                                        {% elif book.status == 'rejected' %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1">Отклонено</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-1">Черновик</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-eye me-1 text-info"></i>{{ book.views_count }}
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-download me-1 text-success"></i>{{ book.downloads_count }}
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-chat-left-text me-1 text-primary"></i>{{ book.reviews_count }}
+                                        </span>
+                                    </td>
+
+                                    <td class="text-center">
+                                        {% if book.book_avg_rating %}
+                                            <span class="fw-bold text-warning-emphasis">
+                                                <i class="bi bi-star-fill text-warning me-1"></i>{{ book.book_avg_rating|floatformat:1 }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted small">—</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="text-end pe-4 text-muted small">
+                                        {{ book.created_at|date:"d.m.Y" }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="p-4 text-center text-muted">
+                    Вы пока не загрузили ни одной книги.
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+{% if user_books %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const labels = {{ chart_labels|safe }};
+    const viewsData = {{ chart_views|safe }};
+    const downloadsData = {{ chart_downloads|safe }};
+
+    const ctx = document.getElementById('authorStatsChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Просмотры',
+                        data: viewsData,
+                        backgroundColor: 'rgba(13, 202, 240, 0.65)',
+                        borderColor: 'rgba(13, 202, 240, 1)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Скачивания',
+                        data: downloadsData,
+                        backgroundColor: 'rgba(25, 135, 84, 0.65)',
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endif %}
+
+{% endblock %}

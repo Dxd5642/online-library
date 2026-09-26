@@ -1,0 +1,6 @@
+django
+django-unfold
+psycopg2-binary
+uvicorn
+python-dotenv
+pillow
