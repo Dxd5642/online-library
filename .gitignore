@@ -2,6 +2,10 @@ tasks.md
 *.drawio
 temp.py
 
+*.jpg
+*.png
+*.pdf
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
