@@ -1,9 +1,6 @@
 # LibSpace — Платформа для авторов и читателей
 
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
-![PostgreSQL](https://img.shields.io/badge/postgres-15+-blue.svg)
-![Docker](https://img.shields.io/badge/docker-ready-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 **LibSpace** 0 это современная веб-платформа для публикации и чтения книг. Проект объединяет авторов и читателей, предоставляя удобный интерфейс для создания произведений, отслеживания прогресса чтения и детальной аналитики вовлеченности аудитории.
 
